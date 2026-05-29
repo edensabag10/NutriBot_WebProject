@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NutriBot - התזונה החכמה שלך</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        // קוסטמיזציה לצבע תכלת (Sky Blue)
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            light: '#e0f2fe', // sky-100
+                            DEFAULT: '#38bdf8', // sky-400
+                            dark: '#0284c7', // sky-600
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Assistant:wght@300;400;600;700&display=swap');
+        body { font-family: 'Assistant', sans-serif; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-900">
+
+    <nav class="bg-brand-dark text-white shadow-md p-4 rounded-b-2xl">
+        <div class="container mx-auto flex justify-between items-center">
+            <h1 class="text-3xl font-extrabold flex items-center gap-2 tracking-tight">
+                NutriBot <span class="text-white">🍃</span>
+            </h1>
+            <ul class="flex gap-6 font-medium text-lg">
+                <li><a href="#" class="hover:text-sky-100 transition">ראשי</a></li>
+                <li><a href="settings.html" class="hover:text-sky-100 transition">היומן שלי</a></li>
+                <li><a href="login.html" class="hover:text-sky-100 transition">יציאה</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <main class="container mx-auto mt-10 p-4 grid grid-cols-1 md:grid-cols-3 gap-10">
+        
+        <div class="md:col-span-1 space-y-8">
+            <div class="bg-white p-8 rounded-3xl shadow-xl border border-slate-100">
+                <h2 class="text-2xl font-bold mb-6 text-brand-dark border-b-2 border-brand-light pb-2">סיכום יומי <span class="text-xs text-slate-400 font-normal">(Fake Data)</span></h2>
+                <div class="space-y-6">
+                    <div>
+                        <div class="flex justify-between mb-2 items-center">
+                            <span class="text-lg font-medium text-slate-700">קלוריות</span>
+                            <span class="text-2xl font-bold text-brand-dark">1,250 <span class="text-sm font-normal text-slate-500">/ 2,000</span></span>
+                        </div>
+                        <div class="w-full bg-slate-100 rounded-full h-4 shadow-inner">
+                            <div class="bg-brand h-4 rounded-full shadow" style="width: 62%"></div>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-3 gap-3 text-center">
+                        <div class="bg-brand-light p-4 rounded-2xl shadow-sm border border-sky-200">
+                            <p class="text-brand-dark font-bold text-xl">150g</p>
+                            <p class="text-sm text-sky-900">פחמימות</p>
+                        </div>
+                        <div class="bg-rose-50 p-4 rounded-2xl shadow-sm border border-rose-200">
+                            <p class="text-rose-700 font-bold text-xl">85g</p>
+                            <p class="text-sm text-rose-900">חלבון</p>
+                        </div>
+                        <div class="bg-amber-50 p-4 rounded-2xl shadow-sm border border-amber-200">
+                            <p class="text-amber-700 font-bold text-xl">40g</p>
+                            <p class="text-sm text-amber-900">שומן</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white p-8 rounded-3xl shadow-lg border border-slate-100">
+                <h2 class="text-xl font-bold mb-2 text-slate-800">הפרופיל של מורן 🍃</h2>
+                <p class="text-sm text-slate-500 mb-5">הגדרות אישיות לליווי מותאם</p>
+                <ul class="space-y-3">
+                    <li class="flex justify-between items-center border-b border-slate-100 pb-2">
+                        <span class="text-slate-600">יעד מרכזי:</span> 
+                        <span class="bg-brand-light text-brand-dark font-bold px-3 py-1 rounded-full text-sm">איזון וסדר יום</span>
+                    </li>
+                    <li class="flex justify-between items-center border-b border-slate-100 pb-2">
+                        <span class="text-slate-600">כלל ברזל:</span> 
+                        <span class="bg-rose-100 text-rose-800 font-bold px-3 py-1 rounded-full text-sm">ללא אוכל לאחר 18:00</span>
+                    </li>
+                    <li class="flex justify-between items-center">
+                        <span class="text-slate-600">העדפת בישול:</span> 
+                        <span class="bg-amber-100 text-amber-900 font-bold px-3 py-1 rounded-full text-sm">מהיר וקל</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="md:col-span-2 space-y-8">
+            
+            <div class="bg-white rounded-3xl shadow-xl flex flex-col h-[450px] border border-slate-100 overflow-hidden">
+                <div class="bg-slate-100 p-5 border-b flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="w-4 h-4 bg-brand rounded-full animate-pulse shadow"></div>
+                        <span class="font-bold text-lg text-slate-800">Nia - המאמנת האישית שלך (AI) 🍃</span>
+                    </div>
+                    <span class="text-xs text-slate-400">זמינה תמיד</span>
+                </div>
+                <div id="chat-window" class="flex-1 p-6 overflow-y-auto space-y-5 bg-slate-50">
+                    <div class="flex justify-start">
+                        <div class="bg-white border border-slate-100 p-4 rounded-2xl rounded-br-none shadow-sm max-w-[75%] text-slate-800">
+                            היי מורן! ראיתי ששתית קפה עם עוגה בבוקר. ☕
+                            רוצה שאציע לך ארוחת צהריים מהירה שתאזן את היום? 🥗
+                        </div>
+                    </div>
+                    <div class="flex justify-end">
+                        <div class="bg-brand-dark text-white p-4 rounded-2xl rounded-bl-none shadow-md max-w-[75%] font-medium">
+                            כן בבקשה! משהו שאני יכולה להכין בעבודה.
+                        </div>
+                    </div>
+                </div>
+                <div class="p-5 border-t border-slate-100 flex gap-3 bg-white">
+                    <input type="text" placeholder="הקלידי הודעה (למשל: 'מתכון מהיר לערב')..." class="flex-1 border border-slate-200 bg-slate-50 rounded-full px-6 py-3 focus:outline-none focus:ring-2 focus:ring-brand focus:bg-white transition">
+                    <button class="bg-brand-dark text-white px-8 py-3 rounded-full hover:bg-brand transition font-bold shadow">שלח</button>
+                    <button class="bg-slate-100 text-slate-600 p-3 rounded-full hover:bg-slate-200 transition shadow-inner" title="צילום צלחת">📷</button>
+                </div>
+            </div>
+
+            <div class="bg-white p-8 rounded-3xl shadow-xl border border-slate-100">
+                <h2 class="text-2xl font-bold mb-6 text-slate-800">יומן אכילה - היום</h2>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-right border-collapse">
+                        <thead>
+                            <tr class="border-b-2 border-slate-100 text-slate-500 text-sm">
+                                <th class="py-3 px-2">שעה</th>
+                                <th class="py-3 px-2">מאכל</th>
+                                <th class="py-3 px-2">קלוריות</th>
+                                <th class="py-3 px-2">חלבון</th>
+                            </tr>
+                        </thead>
+                        <tbody id="meal-table-body" class="text-lg">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="mt-16 pb-8 text-center text-slate-400 text-sm">
+        NutriBot © 2024 | אבטיפוס ראשוני (HCI) | מבוסס על פרסונת 'מורן'
+    </footer>
+
+    <script>
+        const meals = [
+            { time: "08:30", name: "קפה הפוך + פרוסת עוגת בננה 🍰", cals: 350, protein: "5g" },
+            { time: "13:00", name: "סלט עוף וקינואה 🥗 (קנוי)", cals: 450, protein: "32g" },
+            { time: "16:30", name: "תפוח עץ ירוק 🍏", cals: 80, protein: "0g" }
+        ];
+        const tableBody = document.getElementById('meal-table-body');
+        meals.forEach(meal => {
+            const row = `
+                <tr class="border-b border-slate-100 hover:bg-sky-50 transition">
+                    <td class="py-4 px-2 text-slate-500 text-sm">${meal.time}</td>
+                    <td class="py-4 px-2 font-semibold text-slate-800">${meal.name}</td>
+                    <td class="py-4 px-2 font-bold text-brand-dark">${meal.cals} kcal</td>
+                    <td class="py-4 px-2 text-rose-700 font-extrabold">${meal.protein}</td>
+                </tr>
+            `;
+            tableBody.innerHTML += row;
+        });
+    </script>
+</body>
+</html>

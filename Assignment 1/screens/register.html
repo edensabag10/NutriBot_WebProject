@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NutriBot - הרשמה למערכת</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Assistant:wght@300;400;600;700&display=swap');
+        body { font-family: 'Assistant', sans-serif; }
+    </style>
+</head>
+<body class="bg-sky-50 flex items-center justify-center min-h-screen py-10">
+    <div class="bg-white p-10 rounded-3xl shadow-2xl w-full max-w-xl border border-sky-100 relative overflow-hidden">
+        <div class="absolute -top-12 -right-12 text-9xl text-sky-50 opacity-60">🍃</div>
+        
+        <div class="text-center mb-8 relative z-10">
+            <h1 class="text-4xl font-extrabold text-sky-600 mb-2 flex items-center justify-center gap-2">
+                הצטרפי ל-NutriBot <span class="text-sky-400">🍃</span>
+            </h1>
+            <p class="text-slate-500 text-lg">צרי פרופיל תזונתי אישי והתחילי את השינוי</p>
+        </div>
+        
+        <form class="space-y-5 relative z-10">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-slate-700 font-semibold mb-2 text-sm">שם מלא</label>
+                    <input type="text" class="w-full px-5 py-3 rounded-full border border-slate-200 focus:ring-2 focus:ring-sky-400 outline-none transition bg-slate-50" placeholder="הקלידי שם מלא">
+                </div>
+                <div>
+                    <label class="block text-slate-700 font-semibold mb-2 text-sm">אימייל</label>
+                    <input type="email" class="w-full px-5 py-3 rounded-full border border-slate-200 focus:ring-2 focus:ring-sky-400 outline-none transition bg-slate-50" placeholder="example@mail.com">
+                </div>
+            </div>
+
+            <div class="grid grid-cols-3 gap-4">
+                <div>
+                    <label class="block text-slate-700 font-semibold mb-2 text-sm">גיל</label>
+                    <input type="number" class="w-full px-5 py-3 rounded-full border border-slate-200 focus:ring-2 focus:ring-sky-400 outline-none transition bg-slate-50">
+                </div>
+                <div>
+                    <label class="block text-slate-700 font-semibold mb-2 text-sm">גובה (ס"מ)</label>
+                    <input type="number" class="w-full px-5 py-3 rounded-full border border-slate-200 focus:ring-2 focus:ring-sky-400 outline-none transition bg-slate-50">
+                </div>
+                <div>
+                    <label class="block text-slate-700 font-semibold mb-2 text-sm">משקל (ק"ג)</label>
+                    <input type="number" class="w-full px-5 py-3 rounded-full border border-slate-200 focus:ring-2 focus:ring-sky-400 outline-none transition bg-slate-50">
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-slate-700 font-semibold mb-2 text-sm">מטרת תזונה מרכזית</label>
+                <select class="w-full px-5 py-3 rounded-full border border-slate-200 focus:ring-2 focus:ring-sky-400 outline-none transition bg-slate-50 font-medium">
+                    <option>ירידה במשקל</option>
+                    <option>שמירה על משקל קיים</option>
+                    <option>עלייה במסת שריר</option>
+                    <option>תזונת ספורט וביצועים</option>
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-slate-700 font-semibold mb-2 text-sm">בחירת סיסמה</label>
+                <input type="password" class="w-full px-5 py-3 rounded-full border border-slate-200 focus:ring-2 focus:ring-sky-400 outline-none transition bg-slate-50" placeholder="••••••••">
+            </div>
+
+            <button type="button" onclick="window.location.href='login.html'" class="w-full bg-sky-600 text-white font-bold py-4 rounded-full hover:bg-sky-500 shadow-lg transition duration-300 transform hover:scale-[1.02] mt-4">
+                יצירת חשבון וסיום 🚀
+            </button>
+        </form>
+        
+        <div class="mt-6 text-center text-sm text-slate-500">
+            כבר יש לך חשבון? <a href="login.html" class="text-sky-600 font-bold hover:underline">התחבר/י כאן</a>
+        </div>
+    </div>
+</body>
+</html>
