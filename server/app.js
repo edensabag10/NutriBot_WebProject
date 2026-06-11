@@ -2,6 +2,9 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const dotenv = require('dotenv');
+const dns = require('dns');
+
+dns.setServers(['8.8.8.8', '1.1.1.1']);
 
 const usersRoute = require('./routes/users.route');
 const nutritionProfilesRoute = require('./routes/nutritionProfiles.route');
@@ -19,11 +22,14 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-app.use(cors({ origin: ['http://localhost:5173', 'http://127.0.0.1:5173'] }));
+app.use(cors({ origin: [/^http:\/\/localhost:\d+$/, /^http:\/\/127\.0\.0\.1:\d+$/] }));
 app.use(express.json());
 
 app.get('/api', (req, res) => {
-  res.json({ message: 'NutriBot API is running' });
+  res.json({
+    status: 'ok',
+    message: 'NutriBot API is running',
+  });
 });
 
 app.use('/api/users', usersRoute);
@@ -37,14 +43,19 @@ app.use('/api/recipes', recipesRoute);
 app.use('/api/reports', reportsRoute);
 app.use('/api/deviation-recoveries', deviationRecoveriesRoute);
 
+if (!process.env.MONGO_URI) {
+  console.error('Failed to connect to MongoDB Atlas: MONGO_URI is missing from environment variables');
+  process.exit(1);
+}
+
 mongoose
-  .connect(process.env.MONGO_URI)
+  .connect(process.env.MONGO_URI, { serverSelectionTimeoutMS: 10000 })
   .then(() => {
-    console.log('Connected to MongoDB');
+    console.log('Connected to MongoDB Atlas');
     app.listen(PORT, () => {
       console.log(`Server is running on port ${PORT}`);
     });
   })
   .catch((error) => {
-    console.error('Failed to connect to MongoDB:', error.message);
+    console.error('Failed to connect to MongoDB Atlas:', error.message);
   });

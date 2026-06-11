@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import AppLayout from '../GUIComponents/AppLayout.jsx';
 import Button from '../GUIComponents/Button.jsx';
 import Card from '../GUIComponents/Card.jsx';
@@ -8,18 +8,37 @@ import { getCurrentUser } from '../UsersManager/UsersService.js';
 
 export default function Reminders({ setScreen }) {
   const user = getCurrentUser();
-  const [reminders, setReminders] = useState(NutriBotClientService.getReminders(user.id));
+  const [reminders, setReminders] = useState([]);
+  const [error, setError] = useState('');
   const [form, setForm] = useState({ reminderType: 'Log meals', time: '12:00' });
 
-  const refresh = () => setReminders(NutriBotClientService.getReminders(user.id));
-  const handleSubmit = (event) => {
+  const loadReminders = async () => {
+    try {
+      setReminders(await NutriBotClientService.getReminders(user.id));
+      setError('');
+    } catch {
+      setError('Unable to load reminders');
+    }
+  };
+
+  useEffect(() => {
+    loadReminders();
+  }, []);
+
+  const handleSubmit = async (event) => {
     event.preventDefault();
-    NutriBotClientService.addReminder(user.id, form);
-    refresh();
+    await NutriBotClientService.addReminder(user.id, form);
+    await loadReminders();
+  };
+
+  const handleToggle = async (id) => {
+    await NutriBotClientService.toggleReminder(id);
+    await loadReminders();
   };
 
   return (
     <AppLayout title="Daily Reminders" setScreen={setScreen}>
+      {error && <p className="mb-4 text-sm font-semibold text-rose-600">{error}</p>}
       <div className="grid gap-6 lg:grid-cols-2">
         <Card title="Create reminder">
           <form className="space-y-4" onSubmit={handleSubmit}>
@@ -43,7 +62,7 @@ export default function Reminders({ setScreen }) {
                   <div className="font-bold">{reminder.reminderType}</div>
                   <div className="text-sm text-slate-500">{reminder.time}</div>
                 </div>
-                <Button variant="secondary" onClick={() => { NutriBotClientService.toggleReminder(reminder.id); refresh(); }}>
+                <Button variant="secondary" onClick={() => handleToggle(reminder.id)}>
                   {reminder.isActive ? 'Enabled' : 'Disabled'}
                 </Button>
               </div>

@@ -1,237 +1,122 @@
-const users = [
-  {
-    id: '1',
-    username: 'moran',
-    email: 'moran@example.com',
-    password: '123456',
-    fullName: 'מורן',
-    dashboard: {
-      calories: { consumed: 1250, goal: 2000, percent: 62 },
-      macros: { carbs: '150 גרם', protein: '85 גרם', fat: '40 גרם' },
-      profile: {
-        mainGoal: 'איזון ושגרה יומית',
-        rule: 'לא לאכול אחרי 18:00',
-        cookingStyle: 'מהיר וקל',
-      },
-      chat: {
-        botMessage:
-          'היי מורן! ראיתי ששתית קפה עם עוגה בבוקר. רוצה שאציע לך ארוחת צהריים מהירה שתאזן את היום?',
-        userMessage: 'כן בבקשה! משהו שאני יכולה להכין בעבודה.',
-      },
-      meals: [
-        { id: 1, time: '08:30', name: 'קפה הפוך + פרוסת עוגת בננה', cals: 350, protein: '5 גרם' },
-        { id: 2, time: '13:00', name: 'סלט עוף וקינואה', cals: 450, protein: '32 גרם' },
-        { id: 3, time: '16:30', name: 'תפוח ירוק', cals: 80, protein: '0 גרם' },
-      ],
-    },
-  },
-  {
-    id: '2',
-    username: 'admin',
-    email: 'admin@nutribot.com',
-    password: 'admin123',
-    fullName: 'מנהל',
-    dashboard: {
-      calories: { consumed: 1680, goal: 2300, percent: 73 },
-      macros: { carbs: '210 גרם', protein: '110 גרם', fat: '52 גרם' },
-      profile: {
-        mainGoal: 'שמירה על המשקל',
-        rule: 'מעקב חלבון בכל ארוחה',
-        cookingStyle: 'הכנה מראש',
-      },
-      chat: {
-        botMessage:
-          'היי מנהל! צריכת החלבון שלך נראית טובה היום. רוצה רעיון לארוחת ערב מאוזנת?',
-        userMessage: 'כן, שיהיה פשוט.',
-      },
-      meals: [
-        { id: 1, time: '07:45', name: 'יוגורט יווני עם שיבולת שועל', cals: 420, protein: '28 גרם' },
-        { id: 2, time: '12:30', name: 'כריך הודו', cals: 560, protein: '38 גרם' },
-        { id: 3, time: '15:30', name: 'שייק חלבון', cals: 220, protein: '30 גרם' },
-      ],
-    },
-  },
-  {
-    id: '3',
-    username: 'demo',
-    email: 'demo@nutribot.com',
-    password: 'demo123',
-    fullName: 'משתמש לדוגמה',
-    dashboard: {
-      calories: { consumed: 980, goal: 1800, percent: 54 },
-      macros: { carbs: '120 גרם', protein: '62 גרם', fat: '31 גרם' },
-      profile: {
-        mainGoal: 'ירידה מתונה במשקל',
-        rule: 'לשתות מים לפני נשנושים',
-        cookingStyle: 'עד 15 דקות',
-      },
-      chat: {
-        botMessage:
-          'היי משתמש לדוגמה! עדיין נשאר לך מקום לארוחת ערב מאוזנת היום. רוצה הצעה מהירה?',
-        userMessage: 'בטח, משהו קליל.',
-      },
-      meals: [
-        { id: 1, time: '09:00', name: 'טוסט עם קוטג׳', cals: 310, protein: '22 גרם' },
-        { id: 2, time: '13:15', name: 'מרק ירקות', cals: 260, protein: '10 גרם' },
-        { id: 3, time: '16:00', name: 'בננה', cals: 110, protein: '1 גרם' },
-      ],
-    },
-  },
-];
+import { apiRequest } from '../services/apiClient.js';
 
 let currentUser = null;
-const USERS_STORAGE_KEY = 'nutribot-users';
-const CURRENT_USER_STORAGE_KEY = 'nutribot-current-user-id';
-
-function loadSavedUsers() {
-  const savedUsers = localStorage.getItem(USERS_STORAGE_KEY);
-
-  if (!savedUsers) {
-    return;
-  }
-
-  JSON.parse(savedUsers).forEach((savedUser) => {
-    const exists = users.some(
-      (user) =>
-        user.id === savedUser.id ||
-        user.username?.toLowerCase() === savedUser.username?.toLowerCase() ||
-        user.email.toLowerCase() === savedUser.email?.toLowerCase(),
-    );
-
-    if (!exists) {
-      users.push(savedUser);
-    }
-  });
-}
-
-function saveUsers() {
-  localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(users));
-}
-
-function restoreCurrentUser() {
-  const currentUserId = localStorage.getItem(CURRENT_USER_STORAGE_KEY);
-
-  if (currentUserId) {
-    currentUser = users.find((user) => user.id === currentUserId) || null;
-  }
-}
-
-loadSavedUsers();
-restoreCurrentUser();
-
-function getUsers() {
-  return [...users];
-}
-
-function getUserById(id) {
-  return users.find((user) => user.id === id) || null;
-}
 
 function createDefaultDashboard(userData) {
-  const displayName = userData.fullName || 'משתמש חדש';
+  const displayName = userData.fullName || userData.username || 'New user';
 
   return {
     calories: { consumed: 0, goal: 2000, percent: 0 },
-    macros: { carbs: '0 גרם', protein: '0 גרם', fat: '0 גרם' },
+    macros: { carbs: '0 g', protein: '0 g', fat: '0 g' },
     profile: {
-      mainGoal: userData.goal || 'יעד אישי',
-      rule: 'טרם הוגדר',
-      cookingStyle: 'טרם הוגדר',
+      mainGoal: userData.goal || 'Personal goal',
+      rule: 'Not set',
+      cookingStyle: 'Not set',
     },
     chat: {
-      botMessage: `שלום ${displayName}! הפרופיל שלך נוצר בהצלחה. אפשר להתחיל לעקוב אחרי היום שלך.`,
-      userMessage: 'מעולה, בואי נתחיל.',
+      botMessage: `Hello ${displayName}! Your profile was created successfully. You can start tracking your day.`,
+      userMessage: 'Great, let us start.',
     },
     meals: [],
   };
 }
 
-function isUsernameTaken(username) {
+async function getUsers() {
+  return apiRequest('/users');
+}
+
+async function getUserById(id) {
+  return apiRequest(`/users/${id}`);
+}
+
+async function isUsernameTaken(username) {
   const normalizedUsername = username.trim().toLowerCase();
+  const users = await getUsers();
   return users.some((user) => user.username?.toLowerCase() === normalizedUsername);
 }
 
-function isEmailTaken(email) {
+async function isEmailTaken(email) {
   const normalizedEmail = email.trim().toLowerCase();
-  return users.some((user) => user.email.toLowerCase() === normalizedEmail);
+  const users = await getUsers();
+  return users.some((user) => user.email?.toLowerCase() === normalizedEmail);
 }
 
-function createUser(userData) {
+async function register(userData) {
   const normalizedEmail = userData.email.trim().toLowerCase();
   const username = (userData.username || normalizedEmail.split('@')[0]).trim();
 
-  if (isUsernameTaken(username)) {
+  if (await isUsernameTaken(username)) {
     return { user: null, error: 'username-taken' };
   }
 
-  if (isEmailTaken(normalizedEmail)) {
+  if (await isEmailTaken(normalizedEmail)) {
     return { user: null, error: 'email-taken' };
   }
 
-  const newUser = {
-    id: crypto.randomUUID(),
-    ...userData,
-    username,
-    email: normalizedEmail,
-    dashboard: userData.dashboard || createDefaultDashboard(userData),
-  };
+  const user = await apiRequest('/users', {
+    method: 'POST',
+    body: JSON.stringify({
+      ...userData,
+      username,
+      email: normalizedEmail,
+      dashboard: userData.dashboard || createDefaultDashboard({ ...userData, username, email: normalizedEmail }),
+    }),
+  });
 
-  users.push(newUser);
-  saveUsers();
-  return { user: newUser, error: null };
-}
-
-function register(userData) {
-  return createUser(userData);
-}
-
-function updateUser(id, updates) {
-  const userIndex = users.findIndex((user) => user.id === id);
-
-  if (userIndex === -1) {
-    return null;
+  if (userData.age || userData.weight || userData.height) {
+    await apiRequest('/nutrition-profiles', {
+      method: 'POST',
+      body: JSON.stringify({
+        userId: user.id,
+        age: Number(userData.age) || 0,
+        weight: Number(userData.weight) || 0,
+        height: Number(userData.height) || 0,
+        activityLevel: 'Moderate',
+      }),
+    });
   }
 
-  users[userIndex] = {
-    ...users[userIndex],
-    ...updates,
-    id,
-  };
-
-  saveUsers();
-  return users[userIndex];
+  return { user, error: null };
 }
 
-function deleteUser(id) {
-  const userIndex = users.findIndex((user) => user.id === id);
+async function registerUser(userData) {
+  return register(userData);
+}
 
-  if (userIndex === -1) {
-    return false;
+async function updateUser(id, updates) {
+  return apiRequest(`/users/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(updates),
+  });
+}
+
+async function deleteUser(id) {
+  await apiRequest(`/users/${id}`, { method: 'DELETE' });
+
+  if (String(currentUser?.id) === String(id)) {
+    currentUser = null;
   }
 
-  users.splice(userIndex, 1);
-  saveUsers();
   return true;
 }
 
-function login(username, password) {
+async function login(username, password) {
   const normalizedUsername = username.trim().toLowerCase();
+  const users = await getUsers();
 
   const user = users.find(
     (existingUser) =>
       (existingUser.username?.toLowerCase() === normalizedUsername ||
-        existingUser.email.toLowerCase() === normalizedUsername) &&
+        existingUser.email?.toLowerCase() === normalizedUsername) &&
       existingUser.password === password,
   );
 
-  if (!user) {
-    currentUser = null;
-    return null;
-  }
+  currentUser = user || null;
+  return currentUser;
+}
 
-  currentUser = user;
-  localStorage.setItem(CURRENT_USER_STORAGE_KEY, user.id);
-  return user;
+async function loginUser(credentials) {
+  return login(credentials.username || credentials.email || '', credentials.password || '');
 }
 
 function getCurrentUser() {
@@ -239,12 +124,11 @@ function getCurrentUser() {
 }
 
 function getCurrentUserDashboard() {
-  return currentUser?.dashboard || null;
+  return currentUser?.dashboard || createDefaultDashboard(currentUser || {});
 }
 
 function logout() {
   currentUser = null;
-  localStorage.removeItem(CURRENT_USER_STORAGE_KEY);
 }
 
 const UsersService = {
@@ -253,13 +137,30 @@ const UsersService = {
   isUsernameTaken,
   isEmailTaken,
   register,
+  registerUser,
   updateUser,
   deleteUser,
   login,
+  loginUser,
   getCurrentUser,
   getCurrentUserDashboard,
   logout,
 };
 
-export { register, isUsernameTaken, isEmailTaken, login, getCurrentUser, getCurrentUserDashboard, logout };
+export {
+  getUsers,
+  getUserById,
+  register,
+  registerUser,
+  isUsernameTaken,
+  isEmailTaken,
+  updateUser,
+  deleteUser,
+  login,
+  loginUser,
+  getCurrentUser,
+  getCurrentUserDashboard,
+  logout,
+};
+
 export default UsersService;

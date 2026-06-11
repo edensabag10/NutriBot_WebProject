@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import AppLayout from '../GUIComponents/AppLayout.jsx';
 import Button from '../GUIComponents/Button.jsx';
 import Card from '../GUIComponents/Card.jsx';
@@ -6,24 +6,33 @@ import LabeledInput from '../GUIComponents/LabeledInput.jsx';
 import NutriBotClientService from '../services/NutriBotClientService.js';
 import { getCurrentUser } from '../UsersManager/UsersService.js';
 
+const emptyProfile = { age: '', weight: '', height: '', activityLevel: 'Moderate' };
+
 export default function NutritionProfile({ setScreen }) {
   const user = getCurrentUser();
-  const existingProfile = NutriBotClientService.getNutritionProfile(user?.id);
-  const [profile, setProfile] = useState(existingProfile || { age: '', weight: '', height: '', activityLevel: 'Moderate' });
+  const [profile, setProfile] = useState(emptyProfile);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    NutriBotClientService.getNutritionProfile(user?.id)
+      .then((existingProfile) => setProfile(existingProfile || emptyProfile))
+      .catch(() => setError('Unable to load nutrition profile'));
+  }, [user?.id]);
 
   const handleChange = (event) => {
     setProfile({ ...profile, [event.target.name]: event.target.value });
   };
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
-    NutriBotClientService.saveNutritionProfile(user.id, profile);
+    await NutriBotClientService.saveNutritionProfile(user.id, profile);
     setScreen('dashboard');
   };
 
   return (
     <AppLayout title="Nutrition Profile" setScreen={setScreen}>
       <Card title="Personal nutrition details">
+        {error && <p className="mb-4 text-sm font-semibold text-rose-600">{error}</p>}
         <form className="grid gap-4 md:grid-cols-2" onSubmit={handleSubmit}>
           <LabeledInput label="Age" name="age" type="number" value={profile.age} onChange={handleChange} required />
           <LabeledInput label="Weight (kg)" name="weight" type="number" value={profile.weight} onChange={handleChange} required />

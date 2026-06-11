@@ -1,206 +1,301 @@
-const STORAGE_KEY = 'nutribot-client-data';
+import { apiRequest } from './apiClient.js';
 
-const initialData = {
-  nutritionProfiles: [
-    { id: 'profile-1', userId: '1', age: 28, weight: 65, height: 168, activityLevel: 'Moderate' },
-  ],
-  goals: [
-    {
-      id: 'goal-1',
-      userId: '1',
-      goalType: 'Balanced nutrition',
-      targetCalories: 2000,
-      targetProtein: 90,
-      targetCarbs: 230,
-      targetFat: 65,
-    },
-  ],
-  foods: [
-    { id: 'food-1', name: 'Greek yogurt', calories: 120, protein: 18, carbs: 7, fat: 3 },
-    { id: 'food-2', name: 'Chicken breast', calories: 165, protein: 31, carbs: 0, fat: 4 },
-    { id: 'food-3', name: 'Brown rice', calories: 216, protein: 5, carbs: 45, fat: 2 },
-    { id: 'food-4', name: 'Banana', calories: 105, protein: 1, carbs: 27, fat: 0 },
-    { id: 'food-5', name: 'Avocado toast', calories: 260, protein: 8, carbs: 28, fat: 14 },
-  ],
-  foodLogs: [
-    { id: 'log-1', userId: '1', foodId: 'food-1', date: new Date().toISOString().slice(0, 10), quantity: 1, mealType: 'Breakfast' },
-  ],
-  favoriteFoods: [{ id: 'favorite-1', userId: '1', foodId: 'food-1' }],
-  reminders: [
-    { id: 'reminder-1', userId: '1', reminderType: 'Drink water', time: '10:00', isActive: true },
-  ],
-  recipes: [
-    {
-      id: 'recipe-1',
-      name: 'Chicken rice bowl',
-      ingredients: ['Chicken breast', 'Brown rice', 'Vegetables'],
-      calories: 520,
-      protein: 42,
-      carbs: 58,
-      fat: 12,
-      estimatedCost: 18,
-    },
-    {
-      id: 'recipe-2',
-      name: 'Yogurt banana bowl',
-      ingredients: ['Greek yogurt', 'Banana', 'Oats'],
-      calories: 360,
-      protein: 24,
-      carbs: 54,
-      fat: 6,
-      estimatedCost: 11,
-    },
-  ],
-  deviationRecoveries: [],
-};
+const today = () => new Date().toISOString().slice(0, 10);
 
-function loadData() {
-  const savedData = localStorage.getItem(STORAGE_KEY);
-  return savedData ? JSON.parse(savedData) : initialData;
+function byUserId(userId) {
+  return (item) => String(item.userId) === String(userId);
 }
 
-function saveData(data) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-  return data;
+function toNumber(value, fallback = 0) {
+  const number = Number(value);
+  return Number.isFinite(number) ? number : fallback;
 }
 
-function createId(prefix) {
-  return `${prefix}-${crypto.randomUUID()}`;
+async function getData() {
+  const [
+    nutritionProfiles,
+    goals,
+    foods,
+    foodLogs,
+    favoriteFoods,
+    reminders,
+    recipes,
+    reports,
+    deviationRecoveries,
+  ] = await Promise.all([
+    getNutritionProfiles(),
+    getGoals(),
+    getFoods(),
+    getAllFoodLogs(),
+    getAllFavoriteFoods(),
+    getAllReminders(),
+    getRecipes(),
+    getAllReports(),
+    getAllDeviationRecoveries(),
+  ]);
+
+  return {
+    nutritionProfiles,
+    goals,
+    foods,
+    foodLogs,
+    favoriteFoods,
+    reminders,
+    recipes,
+    reports,
+    deviationRecoveries,
+  };
 }
 
-function getData() {
-  return loadData();
+async function getNutritionProfiles() {
+  return apiRequest('/nutrition-profiles');
 }
 
-function upsertByUser(collectionName, userId, item) {
-  const data = loadData();
-  const collection = data[collectionName];
-  const index = collection.findIndex((entry) => entry.id === item.id || entry.userId === userId);
-  const nextItem = { ...item, userId, id: item.id || createId(collectionName) };
+async function getNutritionProfile(userId) {
+  const profiles = await getNutritionProfiles();
+  return profiles.find(byUserId(userId)) || null;
+}
 
-  if (index === -1) {
-    collection.push(nextItem);
-  } else {
-    collection[index] = nextItem;
+async function saveNutritionProfile(userId, profile) {
+  const existingProfile = await getNutritionProfile(userId);
+  const payload = {
+    ...profile,
+    userId,
+    age: toNumber(profile.age),
+    weight: toNumber(profile.weight),
+    height: toNumber(profile.height),
+  };
+
+  if (existingProfile?.id) {
+    return apiRequest(`/nutrition-profiles/${existingProfile.id}`, {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+    });
   }
 
-  saveData(data);
-  return nextItem;
+  return apiRequest('/nutrition-profiles', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
 }
 
-function addToCollection(collectionName, item, prefix) {
-  const data = loadData();
-  const newItem = { ...item, id: item.id || createId(prefix) };
-  data[collectionName].push(newItem);
-  saveData(data);
-  return newItem;
+async function deleteNutritionProfile(id) {
+  return apiRequest(`/nutrition-profiles/${id}`, { method: 'DELETE' });
 }
 
-function updateCollectionItem(collectionName, id, updates) {
-  const data = loadData();
-  data[collectionName] = data[collectionName].map((item) => (item.id === id ? { ...item, ...updates } : item));
-  saveData(data);
+async function getGoals() {
+  return apiRequest('/goals');
 }
 
-function deleteCollectionItem(collectionName, id) {
-  const data = loadData();
-  data[collectionName] = data[collectionName].filter((item) => item.id !== id);
-  saveData(data);
+async function getGoal(userId) {
+  const goals = await getGoals();
+  return goals.find(byUserId(userId)) || null;
 }
 
-function getNutritionProfile(userId) {
-  return loadData().nutritionProfiles.find((profile) => profile.userId === userId) || null;
-}
+async function saveGoal(userId, goal) {
+  const existingGoal = await getGoal(userId);
+  const payload = {
+    ...goal,
+    userId,
+    targetCalories: toNumber(goal.targetCalories),
+    targetProtein: toNumber(goal.targetProtein),
+    targetCarbs: toNumber(goal.targetCarbs),
+    targetFat: toNumber(goal.targetFat),
+  };
 
-function saveNutritionProfile(userId, profile) {
-  return upsertByUser('nutritionProfiles', userId, profile);
-}
-
-function getGoal(userId) {
-  return loadData().goals.find((goal) => goal.userId === userId) || null;
-}
-
-function saveGoal(userId, goal) {
-  return upsertByUser('goals', userId, goal);
-}
-
-function getFoods() {
-  return loadData().foods;
-}
-
-function getFavoriteFoods(userId) {
-  const data = loadData();
-  const favoriteIds = data.favoriteFoods.filter((favorite) => favorite.userId === userId).map((favorite) => favorite.foodId);
-  return data.foods.filter((food) => favoriteIds.includes(food.id));
-}
-
-function toggleFavoriteFood(userId, foodId) {
-  const data = loadData();
-  const favorite = data.favoriteFoods.find((item) => item.userId === userId && item.foodId === foodId);
-
-  if (favorite) {
-    data.favoriteFoods = data.favoriteFoods.filter((item) => item.id !== favorite.id);
-  } else {
-    data.favoriteFoods.push({ id: createId('favorite'), userId, foodId });
+  if (existingGoal?.id) {
+    return apiRequest(`/goals/${existingGoal.id}`, {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+    });
   }
 
-  saveData(data);
+  return apiRequest('/goals', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
 }
 
-function getFoodLogs(userId) {
-  const data = loadData();
-  return data.foodLogs
-    .filter((log) => log.userId === userId)
-    .map((log) => ({ ...log, food: data.foods.find((food) => food.id === log.foodId) }))
+async function deleteGoal(id) {
+  return apiRequest(`/goals/${id}`, { method: 'DELETE' });
+}
+
+async function getFoods() {
+  return apiRequest('/foods');
+}
+
+async function createFood(food) {
+  return apiRequest('/foods', {
+    method: 'POST',
+    body: JSON.stringify(food),
+  });
+}
+
+async function updateFood(id, food) {
+  return apiRequest(`/foods/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(food),
+  });
+}
+
+async function deleteFood(id) {
+  return apiRequest(`/foods/${id}`, { method: 'DELETE' });
+}
+
+async function getAllFavoriteFoods() {
+  return apiRequest('/favorite-foods');
+}
+
+async function getFavoriteFoods(userId) {
+  const [favorites, foods] = await Promise.all([getAllFavoriteFoods(), getFoods()]);
+  const favoriteFoodIds = favorites.filter(byUserId(userId)).map((favorite) => String(favorite.foodId));
+  return foods.filter((food) => favoriteFoodIds.includes(String(food.id)));
+}
+
+async function toggleFavoriteFood(userId, foodId) {
+  const favorites = await getAllFavoriteFoods();
+  const existingFavorite = favorites.find(
+    (favorite) => String(favorite.userId) === String(userId) && String(favorite.foodId) === String(foodId),
+  );
+
+  if (existingFavorite?.id) {
+    await apiRequest(`/favorite-foods/${existingFavorite.id}`, { method: 'DELETE' });
+    return { removed: true };
+  }
+
+  return apiRequest('/favorite-foods', {
+    method: 'POST',
+    body: JSON.stringify({ userId, foodId }),
+  });
+}
+
+async function getAllFoodLogs() {
+  return apiRequest('/food-logs');
+}
+
+async function getFoodLogs(userId) {
+  const [logs, foods] = await Promise.all([getAllFoodLogs(), getFoods()]);
+
+  return logs
+    .filter(byUserId(userId))
+    .map((log) => ({
+      ...log,
+      food: foods.find((food) => String(food.id) === String(log.foodId)),
+    }))
     .filter((log) => log.food);
 }
 
-function addFoodLog(userId, log) {
-  return addToCollection('foodLogs', { ...log, userId, quantity: Number(log.quantity) || 1 }, 'log');
+async function addFoodLog(userId, log) {
+  return apiRequest('/food-logs', {
+    method: 'POST',
+    body: JSON.stringify({
+      ...log,
+      userId,
+      quantity: toNumber(log.quantity, 1),
+      date: log.date || today(),
+    }),
+  });
 }
 
-function deleteFoodLog(id) {
-  deleteCollectionItem('foodLogs', id);
+async function updateFoodLog(id, log) {
+  return apiRequest(`/food-logs/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(log),
+  });
 }
 
-function calculateTotals(userId) {
-  return getFoodLogs(userId).reduce(
+async function deleteFoodLog(id) {
+  return apiRequest(`/food-logs/${id}`, { method: 'DELETE' });
+}
+
+async function calculateTotals(userId) {
+  const logs = await getFoodLogs(userId);
+
+  return logs.reduce(
     (totals, log) => {
-      const quantity = Number(log.quantity) || 1;
+      const quantity = toNumber(log.quantity, 1);
       return {
-        calories: totals.calories + log.food.calories * quantity,
-        protein: totals.protein + log.food.protein * quantity,
-        carbs: totals.carbs + log.food.carbs * quantity,
-        fat: totals.fat + log.food.fat * quantity,
+        calories: totals.calories + toNumber(log.food.calories) * quantity,
+        protein: totals.protein + toNumber(log.food.protein) * quantity,
+        carbs: totals.carbs + toNumber(log.food.carbs) * quantity,
+        fat: totals.fat + toNumber(log.food.fat) * quantity,
       };
     },
     { calories: 0, protein: 0, carbs: 0, fat: 0 },
   );
 }
 
-function getReminders(userId) {
-  return loadData().reminders.filter((reminder) => reminder.userId === userId);
+async function getAllReminders() {
+  return apiRequest('/reminders');
 }
 
-function addReminder(userId, reminder) {
-  return addToCollection('reminders', { ...reminder, userId, isActive: true }, 'reminder');
+async function getReminders(userId) {
+  const reminders = await getAllReminders();
+  return reminders.filter(byUserId(userId));
 }
 
-function toggleReminder(id) {
-  const data = loadData();
-  const reminder = data.reminders.find((item) => item.id === id);
-  if (reminder) {
-    updateCollectionItem('reminders', id, { isActive: !reminder.isActive });
+async function addReminder(userId, reminder) {
+  return apiRequest('/reminders', {
+    method: 'POST',
+    body: JSON.stringify({ ...reminder, userId, isActive: true }),
+  });
+}
+
+async function toggleReminder(id) {
+  const reminders = await getAllReminders();
+  const reminder = reminders.find((item) => String(item.id) === String(id));
+
+  if (!reminder) {
+    return null;
   }
+
+  return apiRequest(`/reminders/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify({ ...reminder, isActive: !reminder.isActive }),
+  });
 }
 
-function getRecipes(maxCost = Infinity) {
-  return loadData().recipes.filter((recipe) => recipe.estimatedCost <= Number(maxCost || Infinity));
+async function deleteReminder(id) {
+  return apiRequest(`/reminders/${id}`, { method: 'DELETE' });
 }
 
-function getReports(userId) {
-  const totals = calculateTotals(userId);
-  const goal = getGoal(userId);
+async function getRecipes(maxCost = Infinity) {
+  const recipes = await apiRequest('/recipes');
+  return recipes.filter((recipe) => toNumber(recipe.estimatedCost) <= Number(maxCost || Infinity));
+}
+
+async function createRecipe(recipe) {
+  return apiRequest('/recipes', {
+    method: 'POST',
+    body: JSON.stringify(recipe),
+  });
+}
+
+async function updateRecipe(id, recipe) {
+  return apiRequest(`/recipes/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(recipe),
+  });
+}
+
+async function deleteRecipe(id) {
+  return apiRequest(`/recipes/${id}`, { method: 'DELETE' });
+}
+
+async function getAllReports() {
+  return apiRequest('/reports');
+}
+
+async function createReport(report) {
+  return apiRequest('/reports', {
+    method: 'POST',
+    body: JSON.stringify(report),
+  });
+}
+
+async function getReports(userId) {
+  const [totals, goal] = await Promise.all([calculateTotals(userId), getGoal(userId)]);
+
   return {
     daily: totals,
     weekly: {
@@ -219,52 +314,86 @@ function getReports(userId) {
   };
 }
 
-function createDeviationRecovery(userId, deviation) {
-  const extraCalories = Number(deviation.extraCalories) || 0;
-  const adjustedCaloriesPerDay = Math.max(0, Math.round(extraCalories / 2));
-  return addToCollection(
-    'deviationRecoveries',
-    {
+async function getAllDeviationRecoveries() {
+  return apiRequest('/deviation-recoveries');
+}
+
+async function getDeviationRecoveries(userId) {
+  const recoveries = await getAllDeviationRecoveries();
+  return recoveries.filter(byUserId(userId));
+}
+
+async function createDeviationRecovery(userId, deviation) {
+  const extraCalories = toNumber(deviation.extraCalories);
+
+  return apiRequest('/deviation-recoveries', {
+    method: 'POST',
+    body: JSON.stringify({
       ...deviation,
       userId,
       extraCalories,
-      adjustedCaloriesPerDay,
-      recoveryStartDate: new Date().toISOString().slice(0, 10),
+      adjustedCaloriesPerDay: Math.max(0, Math.round(extraCalories / 2)),
+      recoveryStartDate: today(),
       recoveryEndDate: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10),
-    },
-    'recovery',
-  );
+    }),
+  });
 }
 
-function getDeviationRecoveries(userId) {
-  return loadData().deviationRecoveries.filter((recovery) => recovery.userId === userId);
+async function updateDeviationRecovery(id, recovery) {
+  return apiRequest(`/deviation-recoveries/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(recovery),
+  });
 }
 
-function getBotReply(message, userId) {
-  const goal = getGoal(userId);
-  const totals = calculateTotals(userId);
+async function deleteDeviationRecovery(id) {
+  return apiRequest(`/deviation-recoveries/${id}`, { method: 'DELETE' });
+}
+
+async function getBotReply(message, userId) {
+  const [goal, totals] = await Promise.all([getGoal(userId), calculateTotals(userId)]);
   return `Based on your ${goal?.goalType || 'nutrition'} goal, you logged ${Math.round(totals.calories)} calories today. Tip: ${message.toLowerCase().includes('protein') ? 'add yogurt, eggs, or chicken to raise protein.' : 'choose a balanced meal with protein, carbs, vegetables, and water.'}`;
 }
 
 const NutriBotClientService = {
   getData,
+  getNutritionProfiles,
   getNutritionProfile,
   saveNutritionProfile,
+  deleteNutritionProfile,
+  getGoals,
   getGoal,
   saveGoal,
+  deleteGoal,
   getFoods,
+  createFood,
+  updateFood,
+  deleteFood,
+  getAllFavoriteFoods,
   getFavoriteFoods,
   toggleFavoriteFood,
+  getAllFoodLogs,
   getFoodLogs,
   addFoodLog,
+  updateFoodLog,
   deleteFoodLog,
   calculateTotals,
+  getAllReminders,
   getReminders,
   addReminder,
   toggleReminder,
+  deleteReminder,
   getRecipes,
+  createRecipe,
+  updateRecipe,
+  deleteRecipe,
+  getAllReports,
+  createReport,
   getReports,
+  getAllDeviationRecoveries,
   createDeviationRecovery,
+  updateDeviationRecovery,
+  deleteDeviationRecovery,
   getDeviationRecoveries,
   getBotReply,
 };
