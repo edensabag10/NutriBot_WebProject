@@ -80,6 +80,44 @@ const users = [
 ];
 
 let currentUser = null;
+const USERS_STORAGE_KEY = 'nutribot-users';
+const CURRENT_USER_STORAGE_KEY = 'nutribot-current-user-id';
+
+function loadSavedUsers() {
+  const savedUsers = localStorage.getItem(USERS_STORAGE_KEY);
+
+  if (!savedUsers) {
+    return;
+  }
+
+  JSON.parse(savedUsers).forEach((savedUser) => {
+    const exists = users.some(
+      (user) =>
+        user.id === savedUser.id ||
+        user.username?.toLowerCase() === savedUser.username?.toLowerCase() ||
+        user.email.toLowerCase() === savedUser.email?.toLowerCase(),
+    );
+
+    if (!exists) {
+      users.push(savedUser);
+    }
+  });
+}
+
+function saveUsers() {
+  localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(users));
+}
+
+function restoreCurrentUser() {
+  const currentUserId = localStorage.getItem(CURRENT_USER_STORAGE_KEY);
+
+  if (currentUserId) {
+    currentUser = users.find((user) => user.id === currentUserId) || null;
+  }
+}
+
+loadSavedUsers();
+restoreCurrentUser();
 
 function getUsers() {
   return [...users];
@@ -139,6 +177,7 @@ function createUser(userData) {
   };
 
   users.push(newUser);
+  saveUsers();
   return { user: newUser, error: null };
 }
 
@@ -159,6 +198,7 @@ function updateUser(id, updates) {
     id,
   };
 
+  saveUsers();
   return users[userIndex];
 }
 
@@ -170,6 +210,7 @@ function deleteUser(id) {
   }
 
   users.splice(userIndex, 1);
+  saveUsers();
   return true;
 }
 
@@ -189,6 +230,7 @@ function login(username, password) {
   }
 
   currentUser = user;
+  localStorage.setItem(CURRENT_USER_STORAGE_KEY, user.id);
   return user;
 }
 
@@ -202,6 +244,7 @@ function getCurrentUserDashboard() {
 
 function logout() {
   currentUser = null;
+  localStorage.removeItem(CURRENT_USER_STORAGE_KEY);
 }
 
 const UsersService = {

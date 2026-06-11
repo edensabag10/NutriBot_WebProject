@@ -1,0 +1,50 @@
+const express = require('express');
+const mongoose = require('mongoose');
+const cors = require('cors');
+const dotenv = require('dotenv');
+
+const usersRoute = require('./routes/users.route');
+const nutritionProfilesRoute = require('./routes/nutritionProfiles.route');
+const goalsRoute = require('./routes/goals.route');
+const foodsRoute = require('./routes/foods.route');
+const foodLogsRoute = require('./routes/foodLogs.route');
+const favoriteFoodsRoute = require('./routes/favoriteFoods.route');
+const remindersRoute = require('./routes/reminders.route');
+const recipesRoute = require('./routes/recipes.route');
+const reportsRoute = require('./routes/reports.route');
+const deviationRecoveriesRoute = require('./routes/deviationRecoveries.route');
+
+dotenv.config();
+
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+app.use(cors({ origin: ['http://localhost:5173', 'http://127.0.0.1:5173'] }));
+app.use(express.json());
+
+app.get('/api', (req, res) => {
+  res.json({ message: 'NutriBot API is running' });
+});
+
+app.use('/api/users', usersRoute);
+app.use('/api/nutrition-profiles', nutritionProfilesRoute);
+app.use('/api/goals', goalsRoute);
+app.use('/api/foods', foodsRoute);
+app.use('/api/food-logs', foodLogsRoute);
+app.use('/api/favorite-foods', favoriteFoodsRoute);
+app.use('/api/reminders', remindersRoute);
+app.use('/api/recipes', recipesRoute);
+app.use('/api/reports', reportsRoute);
+app.use('/api/deviation-recoveries', deviationRecoveriesRoute);
+
+mongoose
+  .connect(process.env.MONGO_URI)
+  .then(() => {
+    console.log('Connected to MongoDB');
+    app.listen(PORT, () => {
+      console.log(`Server is running on port ${PORT}`);
+    });
+  })
+  .catch((error) => {
+    console.error('Failed to connect to MongoDB:', error.message);
+  });
