@@ -23,7 +23,7 @@ router.get('/:id', async (req, res) => {
 
 router.post('/', async (req, res) => {
   try {
-    // TODO: Add validation, password hashing, and login/register endpoints.
+    // TODO: Add validation before creating users.
     res.status(201).json(await User.create(req.body));
   } catch (error) {
     res.status(400).json({ message: 'Failed to create user', error: error.message });

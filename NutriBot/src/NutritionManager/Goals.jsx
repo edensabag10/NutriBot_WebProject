@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import AppLayout from '../GUIComponents/AppLayout.jsx';
 import Button from '../GUIComponents/Button.jsx';
 import Card from '../GUIComponents/Card.jsx';
@@ -6,29 +6,37 @@ import LabeledInput from '../GUIComponents/LabeledInput.jsx';
 import NutriBotClientService from '../services/NutriBotClientService.js';
 import { getCurrentUser } from '../UsersManager/UsersService.js';
 
+const emptyGoal = {
+  goalType: 'Balanced nutrition',
+  targetCalories: 2000,
+  targetProtein: 90,
+  targetCarbs: 230,
+  targetFat: 65,
+};
+
 export default function Goals({ setScreen }) {
   const user = getCurrentUser();
-  const existingGoal = NutriBotClientService.getGoal(user?.id);
-  const [goal, setGoal] = useState(
-    existingGoal || {
-      goalType: 'Balanced nutrition',
-      targetCalories: 2000,
-      targetProtein: 90,
-      targetCarbs: 230,
-      targetFat: 65,
-    },
-  );
+  const [goal, setGoal] = useState(emptyGoal);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    NutriBotClientService.getGoal(user?.id)
+      .then((existingGoal) => setGoal(existingGoal || emptyGoal))
+      .catch(() => setError('Unable to load goal'));
+  }, [user?.id]);
 
   const handleChange = (event) => setGoal({ ...goal, [event.target.name]: event.target.value });
-  const handleSubmit = (event) => {
+
+  const handleSubmit = async (event) => {
     event.preventDefault();
-    NutriBotClientService.saveGoal(user.id, goal);
+    await NutriBotClientService.saveGoal(user.id, goal);
     setScreen('dashboard');
   };
 
   return (
     <AppLayout title="Goal Management" setScreen={setScreen}>
       <Card title="Nutrition goal">
+        {error && <p className="mb-4 text-sm font-semibold text-rose-600">{error}</p>}
         <form className="grid gap-4 md:grid-cols-2" onSubmit={handleSubmit}>
           <label>
             <span className="mb-1 block text-sm font-semibold text-slate-600">Goal type</span>

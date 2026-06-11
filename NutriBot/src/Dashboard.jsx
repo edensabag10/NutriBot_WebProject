@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import AppLayout from './GUIComponents/AppLayout.jsx';
 import Card from './GUIComponents/Card.jsx';
 import NutriBotClientService from './services/NutriBotClientService.js';
@@ -17,9 +17,16 @@ const featureCards = [
   ['recipes', 'Budget Recipes', 'Filter recipe suggestions by estimated cost.'],
 ];
 
+const emptyTotals = { calories: 0, protein: 0, carbs: 0, fat: 0 };
+
 export default function Dashboard({ setScreen }) {
   const currentUser = getCurrentUser();
   const dashboard = getCurrentUserDashboard();
+  const [totals, setTotals] = useState(emptyTotals);
+  const [goal, setGoal] = useState(null);
+  const [profile, setProfile] = useState(null);
+  const [reminders, setReminders] = useState([]);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     if (!currentUser || !dashboard) {
@@ -27,17 +34,34 @@ export default function Dashboard({ setScreen }) {
     }
   }, [currentUser, dashboard, setScreen]);
 
+  useEffect(() => {
+    if (!currentUser) {
+      return;
+    }
+
+    Promise.all([
+      NutriBotClientService.calculateTotals(currentUser.id),
+      NutriBotClientService.getGoal(currentUser.id),
+      NutriBotClientService.getNutritionProfile(currentUser.id),
+      NutriBotClientService.getReminders(currentUser.id),
+    ])
+      .then(([nextTotals, nextGoal, nextProfile, nextReminders]) => {
+        setTotals(nextTotals);
+        setGoal(nextGoal);
+        setProfile(nextProfile);
+        setReminders(nextReminders);
+        setError('');
+      })
+      .catch(() => setError('Unable to load dashboard data'));
+  }, [currentUser]);
+
   if (!currentUser || !dashboard) {
     return null;
   }
 
-  const totals = NutriBotClientService.calculateTotals(currentUser.id);
-  const goal = NutriBotClientService.getGoal(currentUser.id);
-  const profile = NutriBotClientService.getNutritionProfile(currentUser.id);
-  const reminders = NutriBotClientService.getReminders(currentUser.id);
-
   return (
     <AppLayout title={`Welcome, ${currentUser.fullName || currentUser.username}`} setScreen={setScreen}>
+      {error && <p className="mb-4 text-sm font-semibold text-rose-600">{error}</p>}
       <div className="grid gap-6 lg:grid-cols-4">
         <Card title="Today">
           <div className="space-y-3">

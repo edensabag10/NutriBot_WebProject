@@ -1,13 +1,22 @@
+import { useEffect, useState } from 'react';
 import AppLayout from '../GUIComponents/AppLayout.jsx';
 import Card from '../GUIComponents/Card.jsx';
 import UsersService from './UsersService.js';
 
 export default function ManageUsers({ setScreen }) {
-  const users = UsersService.getUsers();
+  const [users, setUsers] = useState([]);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    UsersService.getUsers()
+      .then(setUsers)
+      .catch(() => setError('Unable to load users'));
+  }, []);
 
   return (
     <AppLayout title="Manage Users" setScreen={setScreen}>
       <Card title="Registered users">
+        {error && <p className="mb-4 text-sm font-semibold text-rose-600">{error}</p>}
         <div className="overflow-x-auto">
           <table className="w-full border-collapse text-left">
             <thead>

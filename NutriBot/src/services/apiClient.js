@@ -1,6 +1,25 @@
-const API_BASE_URL = '/api';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api';
 
-// TODO: Replace this fetch wrapper with Axios after axios is installed.
+function normalizeDocument(document) {
+  if (!document || typeof document !== 'object') {
+    return document;
+  }
+
+  if (Array.isArray(document)) {
+    return document.map(normalizeDocument);
+  }
+
+  const normalized = Object.fromEntries(
+    Object.entries(document).map(([key, value]) => [key, normalizeDocument(value)]),
+  );
+
+  if (normalized._id && !normalized.id) {
+    normalized.id = normalized._id;
+  }
+
+  return normalized;
+}
+
 export async function apiRequest(path, options = {}) {
   const response = await fetch(`${API_BASE_URL}${path}`, {
     headers: {
@@ -11,8 +30,21 @@ export async function apiRequest(path, options = {}) {
   });
 
   if (!response.ok) {
-    throw new Error(`API request failed with status ${response.status}`);
+    let message = `API request failed with status ${response.status}`;
+
+    try {
+      const errorBody = await response.json();
+      message = errorBody.message || message;
+    } catch {
+      // Keep the generic status message when the response body is not JSON.
+    }
+
+    throw new Error(message);
   }
 
-  return response.json();
+  if (response.status === 204) {
+    return null;
+  }
+
+  return normalizeDocument(await response.json());
 }

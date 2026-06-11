@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import AppLayout from '../GUIComponents/AppLayout.jsx';
 import Button from '../GUIComponents/Button.jsx';
 import Card from '../GUIComponents/Card.jsx';
@@ -6,23 +6,62 @@ import LabeledInput from '../GUIComponents/LabeledInput.jsx';
 import NutriBotClientService from '../services/NutriBotClientService.js';
 import { getCurrentUser } from '../UsersManager/UsersService.js';
 
+const emptyTotals = { calories: 0, protein: 0, carbs: 0, fat: 0 };
+
 export default function DailyFoodLog({ setScreen }) {
   const user = getCurrentUser();
-  const foods = NutriBotClientService.getFoods();
-  const [logs, setLogs] = useState(NutriBotClientService.getFoodLogs(user.id));
-  const [form, setForm] = useState({ foodId: foods[0]?.id || '', quantity: 1, date: new Date().toISOString().slice(0, 10), mealType: 'Breakfast' });
-  const totals = NutriBotClientService.calculateTotals(user.id);
+  const [foods, setFoods] = useState([]);
+  const [logs, setLogs] = useState([]);
+  const [totals, setTotals] = useState(emptyTotals);
+  const [error, setError] = useState('');
+  const [form, setForm] = useState({
+    foodId: '',
+    quantity: 1,
+    date: new Date().toISOString().slice(0, 10),
+    mealType: 'Breakfast',
+  });
 
-  const refresh = () => setLogs(NutriBotClientService.getFoodLogs(user.id));
+  const loadData = async () => {
+    try {
+      const [nextFoods, nextLogs, nextTotals] = await Promise.all([
+        NutriBotClientService.getFoods(),
+        NutriBotClientService.getFoodLogs(user.id),
+        NutriBotClientService.calculateTotals(user.id),
+      ]);
+
+      setFoods(nextFoods);
+      setLogs(nextLogs);
+      setTotals(nextTotals);
+      setError('');
+      setForm((currentForm) => ({
+        ...currentForm,
+        foodId: currentForm.foodId || nextFoods[0]?.id || '',
+      }));
+    } catch {
+      setError('Unable to load food diary data');
+    }
+  };
+
+  useEffect(() => {
+    loadData();
+  }, []);
+
   const handleChange = (event) => setForm({ ...form, [event.target.name]: event.target.value });
-  const handleSubmit = (event) => {
+
+  const handleSubmit = async (event) => {
     event.preventDefault();
-    NutriBotClientService.addFoodLog(user.id, form);
-    refresh();
+    await NutriBotClientService.addFoodLog(user.id, form);
+    await loadData();
+  };
+
+  const handleDelete = async (id) => {
+    await NutriBotClientService.deleteFoodLog(id);
+    await loadData();
   };
 
   return (
     <AppLayout title="Daily Food Diary" setScreen={setScreen}>
+      {error && <p className="mb-4 text-sm font-semibold text-rose-600">{error}</p>}
       <div className="grid gap-6 lg:grid-cols-3">
         <Card title="Add food">
           <form className="space-y-4" onSubmit={handleSubmit}>
@@ -64,9 +103,9 @@ export default function DailyFoodLog({ setScreen }) {
               <div key={log.id} className="flex items-center justify-between rounded-lg border border-slate-200 p-3">
                 <div>
                   <div className="font-bold">{log.food.name}</div>
-                  <div className="text-sm text-slate-500">{log.mealType} · {log.quantity} serving(s)</div>
+                  <div className="text-sm text-slate-500">{log.mealType} - {log.quantity} serving(s)</div>
                 </div>
-                <button className="text-sm font-bold text-rose-600" onClick={() => { NutriBotClientService.deleteFoodLog(log.id); refresh(); }}>Remove</button>
+                <button className="text-sm font-bold text-rose-600" onClick={() => handleDelete(log.id)}>Remove</button>
               </div>
             ))}
           </div>

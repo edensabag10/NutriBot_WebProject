@@ -28,7 +28,7 @@ export default function Profile({ setScreen }) {
           </div>
           <div className="rounded-lg bg-slate-100 p-4">
             <p className="text-sm font-semibold text-slate-500">Storage</p>
-            <p className="text-xl font-black">Client localStorage</p>
+            <p className="text-xl font-black">MongoDB Atlas</p>
           </div>
         </div>
       </Card>
