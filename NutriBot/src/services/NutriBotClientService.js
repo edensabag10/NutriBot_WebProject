@@ -351,8 +351,16 @@ async function deleteDeviationRecovery(id) {
 }
 
 async function getBotReply(message, userId) {
-  const [goal, totals] = await Promise.all([getGoal(userId), calculateTotals(userId)]);
-  return `Based on your ${goal?.goalType || 'nutrition'} goal, you logged ${Math.round(totals.calories)} calories today. Tip: ${message.toLowerCase().includes('protein') ? 'add yogurt, eggs, or chicken to raise protein.' : 'choose a balanced meal with protein, carbs, vegetables, and water.'}`;
+  try {
+    const response = await apiRequest('/deviation-recoveries/chat', {
+      method: 'POST',
+      body: JSON.stringify({ message })
+    });
+    return response.reply;
+  } catch (error) {
+    console.error('Failed to get AI response from server:', error);
+    return 'אוי, סליחה! משהו השתבש בתקשורת שלי עם השרת. תוכלי לנסות לשלוח שוב?';
+  }
 }
 
 const NutriBotClientService = {

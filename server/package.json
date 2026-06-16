@@ -9,8 +9,9 @@
     "seed": "node seed.js"
   },
   "dependencies": {
+    "@google/genai": "^2.8.0",
     "cors": "^2.8.5",
-    "dotenv": "^16.4.7",
+    "dotenv": "^16.6.1",
     "express": "^4.21.2",
     "mongoose": "^8.9.5"
   },

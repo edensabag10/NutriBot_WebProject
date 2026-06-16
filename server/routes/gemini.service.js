@@ -11,10 +11,11 @@ const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 async function generateNutriBotResponse(userMessage) {
   try {
     if (!process.env.GEMINI_API_KEY) {
-      throw new Error("GEMINI_API_KEY is missing from environment variables");
+      console.error("Missing GEMINI_API_KEY in .env file");
+      return "שגיאת מערכת: מפתח ה-AI לא הוגדר כראוי בקובץ ה-env.";
     }
 
-    // הגדרת ה"פרומפט מערכת" - כאן אנחנו מעצבים את האישיות והתפקידים של הבוט
+    // הגדרת ה"פרומפט מערכת" - האישיות והתפקידים של הבוט
     const systemInstruction = `
       You are NutriBot, an empathetic, professional, and practical AI nutrition assistant. 
       Your goals are strictly limited to the following three categories:
@@ -29,18 +30,16 @@ async function generateNutriBotResponse(userMessage) {
       - If a user asks something completely unrelated to nutrition, recipes, or health, gently guide them back to your core topics.
     `;
 
-    // קריאת ה-API למודל המומלץ והמהיר gemini-2.5-flash
+    // קריאה לשרתים של גוגל
     const response = await ai.models.generateContent({
       model: 'gemini-2.5-flash',
       contents: userMessage,
       config: {
         systemInstruction: systemInstruction,
-        // טמפרטורה נמוכה יחסית (0.5) שומרת על הבוט מקצועי וממוקד בלי "להזות" עובדות
         temperature: 0.5, 
       }
     });
 
-    // החזרת הטקסט שהתקבל מהמודל
     return response.text;
 
   } catch (error) {
@@ -49,6 +48,4 @@ async function generateNutriBotResponse(userMessage) {
   }
 }
 
-// ייצוא הפונקציה כדי שתוכלי להשתמש בה בתוך ה-Route של הצ'אט שלכם
 module.exports = { generateNutriBotResponse };
-export {};

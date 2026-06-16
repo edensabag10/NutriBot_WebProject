@@ -17,7 +17,7 @@ const recipesRoute = require('./routes/recipes.route');
 const reportsRoute = require('./routes/reports.route');
 const deviationRecoveriesRoute = require('./routes/deviationRecoveries.route');
 
-dotenv.config();
+dotenv.config({ path: __dirname + '/.env' });
 
 const app = express();
 const PORT = process.env.PORT || 3000;
