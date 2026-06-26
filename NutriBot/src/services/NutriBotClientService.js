@@ -368,6 +368,9 @@ async function getBotReply(message, userId, userData = null) {
     return response.reply;
   } catch (error) {
     console.error('Failed to get AI response from server:', error);
+    if (error.message) {
+      return error.message;
+    }
     return 'אוי, סליחה! משהו השתבש בתקשורת שלי עם השרת. תוכלי לנסות לשלוח שוב?';
   }
 }
