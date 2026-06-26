@@ -7,6 +7,7 @@ const FoodSchema = new mongoose.Schema(
     protein: Number,
     carbs: Number,
     fat: Number,
+    imageUrl: String,
     createdAt: { type: Date, default: Date.now },
   },
   { collection: 'Foods', versionKey: false },

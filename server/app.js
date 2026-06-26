@@ -59,3 +59,4 @@ mongoose
   .catch((error) => {
     console.error('Failed to connect to MongoDB Atlas:', error.message);
   });
+
