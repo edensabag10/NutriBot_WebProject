@@ -22,7 +22,23 @@ dotenv.config({ path: __dirname + '/.env' });
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-app.use(cors({ origin: [/^http:\/\/localhost:\d+$/, /^http:\/\/127\.0\.0\.1:\d+$/] }));
+const allowedOrigins = [
+  /^http:\/\/localhost:\d+$/,
+  /^http:\/\/127\.0\.0\.1:\d+$/,
+  'https://nutribot-frontend-one.vercel.app',
+];
+
+app.use(cors({
+  origin: allowedOrigins,
+  credentials: true,
+  optionsSuccessStatus: 204,
+}));
+
+app.options('*', cors({
+  origin: allowedOrigins,
+  credentials: true,
+  optionsSuccessStatus: 204,
+}));
 app.use(express.json());
 
 app.get('/api', (req, res) => {
