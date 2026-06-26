@@ -65,34 +65,36 @@ export default function Dashboard({ setScreen }) {
       <div className="grid gap-6 lg:grid-cols-4">
         <Card title="Today">
           <div className="space-y-3">
-            <p className="text-4xl font-black text-sky-700">{Math.round(totals.calories)}</p>
-            <p className="text-sm font-semibold text-slate-500">calories logged</p>
+            <p className="text-4xl font-black text-sky-700 dark:text-sky-400">{Math.round(totals.calories)}</p>
+            <p className="text-sm font-semibold text-slate-500 dark:text-slate-400">calories logged</p>
             <div className="grid grid-cols-3 gap-2 text-center text-sm">
-              <div className="rounded-lg bg-rose-50 p-2 font-bold">P {Math.round(totals.protein)}</div>
-              <div className="rounded-lg bg-amber-50 p-2 font-bold">C {Math.round(totals.carbs)}</div>
-              <div className="rounded-lg bg-emerald-50 p-2 font-bold">F {Math.round(totals.fat)}</div>
+              <div className="rounded-lg bg-rose-50 dark:bg-rose-950/50 text-rose-700 dark:text-rose-300 p-2 font-bold">P {Math.round(totals.protein)}</div>
+              <div className="rounded-lg bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300 p-2 font-bold">C {Math.round(totals.carbs)}</div>
+              <div className="rounded-lg bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 p-2 font-bold">F {Math.round(totals.fat)}</div>
             </div>
           </div>
         </Card>
 
         <Card title="Goal">
-          <p className="text-lg font-black text-slate-900">{goal?.goalType || dashboard.profile.mainGoal}</p>
-          <p className="mt-2 text-sm text-slate-600">Target calories: {goal?.targetCalories || dashboard.calories.goal}</p>
-          <button className="mt-4 font-bold text-sky-700" onClick={() => setScreen('goals')}>Edit goal</button>
+          <p className="text-lg font-black text-slate-900 dark:text-white">{goal?.goalType || dashboard.profile.mainGoal}</p>
+          <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">Target calories: {goal?.targetCalories || dashboard.calories.goal}</p>
+          <button className="mt-4 font-bold text-sky-700 dark:text-sky-400 hover:underline" onClick={() => setScreen('goals')}>Edit goal</button>
         </Card>
 
         <Card title="Profile">
-          <p className="text-sm text-slate-600">Age: {profile?.age || 'Not set'}</p>
-          <p className="text-sm text-slate-600">Weight: {profile?.weight || 'Not set'}</p>
-          <p className="text-sm text-slate-600">Height: {profile?.height || 'Not set'}</p>
-          <p className="text-sm text-slate-600">Activity: {profile?.activityLevel || 'Not set'}</p>
-          <button className="mt-4 font-bold text-sky-700" onClick={() => setScreen('nutrition-profile')}>Edit profile</button>
+          <div className="space-y-1 text-sm text-slate-600 dark:text-slate-300">
+            <p>Age: {profile?.age || 'Not set'}</p>
+            <p>Weight: {profile?.weight || 'Not set'}</p>
+            <p>Height: {profile?.height || 'Not set'}</p>
+            <p>Activity: {profile?.activityLevel || 'Not set'}</p>
+          </div>
+          <button className="mt-4 font-bold text-sky-700 dark:text-sky-400 hover:underline" onClick={() => setScreen('nutrition-profile')}>Edit profile</button>
         </Card>
 
         <Card title="Reminders">
-          <p className="text-4xl font-black text-sky-700">{reminders.filter((item) => item.isActive).length}</p>
-          <p className="text-sm font-semibold text-slate-500">active reminders</p>
-          <button className="mt-4 font-bold text-sky-700" onClick={() => setScreen('reminders')}>Manage reminders</button>
+          <p className="text-4xl font-black text-sky-700 dark:text-sky-400">{reminders.filter((item) => item.isActive).length}</p>
+          <p className="text-sm font-semibold text-slate-500 dark:text-slate-400">active reminders</p>
+          <button className="mt-4 font-bold text-sky-700 dark:text-sky-400 hover:underline" onClick={() => setScreen('reminders')}>Manage reminders</button>
         </Card>
       </div>
 
@@ -103,10 +105,10 @@ export default function Dashboard({ setScreen }) {
               <button
                 key={screen}
                 onClick={() => setScreen(screen)}
-                className="rounded-lg border border-slate-200 p-4 text-left transition hover:border-sky-400 hover:bg-sky-50"
+                className="rounded-lg border border-slate-200 dark:border-slate-700 p-4 text-left transition hover:border-sky-400 dark:hover:border-sky-500 hover:bg-sky-50 dark:hover:bg-slate-800 bg-white dark:bg-slate-900/50"
               >
-                <h3 className="text-lg font-black text-slate-900">{title}</h3>
-                <p className="mt-1 text-sm text-slate-600">{description}</p>
+                <h3 className="text-lg font-black text-slate-900 dark:text-white">{title}</h3>
+                <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">{description}</p>
               </button>
             ))}
           </div>
