@@ -21,7 +21,7 @@ export default function ChatBot({ setScreen }) {
     setMessages((currentMessages) => [...currentMessages, { role: 'user', text: userMessage }]);
 
     try {
-      const reply = await NutriBotClientService.getBotReply(userMessage, user.id);
+      const reply = await NutriBotClientService.getBotReply(userMessage, user?.id, user);
       setMessages((currentMessages) => [...currentMessages, { role: 'bot', text: reply }]);
     } catch {
       setMessages((currentMessages) => [

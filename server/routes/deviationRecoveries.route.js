@@ -1,5 +1,10 @@
 const express = require('express');
 const DeviationRecovery = require('../models/DeviationRecoverySchema');
+const User = require('../models/UserSchema');
+const NutritionProfile = require('../models/NutritionProfileSchema');
+const Goal = require('../models/GoalSchema');
+const FoodLog = require('../models/FoodLogSchema');
+const Food = require('../models/FoodSchema');
 const { GoogleGenAI } = require('@google/genai');
 
 const router = express.Router();
@@ -10,7 +15,7 @@ const router = express.Router();
  */
 router.post('/chat', async (req, res) => {
   try {
-    const { message } = req.body;
+    const { message, userId: incomingUserId, user } = req.body;
 
     if (!message) {
       return res.status(400).json({ message: 'Message is required' });
@@ -18,6 +23,75 @@ router.post('/chat', async (req, res) => {
 
     if (!process.env.GEMINI_API_KEY) {
       return res.status(500).json({ message: 'Gemini API key is missing in the server setup' });
+    }
+
+    const resolvedUserId = incomingUserId || user?.id;
+    let userContext = '';
+
+    if (resolvedUserId) {
+      const [userRecord, profile, goal, recentDeviations, recentFoodLogs] = await Promise.all([
+        User.findById(resolvedUserId).lean(),
+        NutritionProfile.findOne({ userId: resolvedUserId }).lean(),
+        Goal.findOne({ userId: resolvedUserId }).lean(),
+        DeviationRecovery.find({ userId: resolvedUserId })
+          .sort({ deviationDate: -1, createdAt: -1 })
+          .limit(5)
+          .lean(),
+        FoodLog.find({ userId: resolvedUserId })
+          .sort({ date: -1, createdAt: -1 })
+          .limit(10)
+          .lean(),
+      ]);
+
+      const currentUser = userRecord || user || {};
+      const cheatMealSummary = recentDeviations.length
+        ? recentDeviations
+            .map((entry) => {
+              const deviationDate = entry.deviationDate ? new Date(entry.deviationDate).toISOString().slice(0, 10) : 'Unknown date';
+              return `- ${deviationDate}: ${entry.description || 'Cheat meal'} (${entry.extraCalories ?? 0} extra kcal)${entry.notes ? ` | Notes: ${entry.notes}` : ''}`;
+            })
+            .join('\n')
+        : '- No recent cheat meals recorded';
+
+      const foodLogIds = [...new Set(recentFoodLogs.map((entry) => entry.foodId).filter(Boolean))];
+      const recentFoods = foodLogIds.length
+        ? await Food.find({ _id: { $in: foodLogIds } }).lean()
+        : [];
+      const foodLookup = Object.fromEntries(recentFoods.map((food) => [String(food._id), food]));
+
+      const recentMealsSummary = recentFoodLogs.length
+        ? recentFoodLogs
+            .map((entry) => {
+              const food = foodLookup[String(entry.foodId)];
+              const date = entry.date ? new Date(entry.date).toISOString().slice(0, 10) : 'Unknown date';
+              const foodName = food?.name || 'Unknown food';
+              const quantity = entry.quantity ? ` x${entry.quantity}` : '';
+              const mealType = entry.mealType ? ` [${entry.mealType}]` : '';
+              return `- ${date}${mealType}: ${foodName}${quantity}`;
+            })
+            .join('\n')
+        : '- No recent food logs recorded';
+
+      userContext = `
+User profile context:
+- Name: ${currentUser.fullName || currentUser.username || 'Not provided'}
+- Username: ${currentUser.username || 'Not provided'}
+- Age: ${profile?.age ?? 'Not provided'}
+- Weight: ${profile?.weight ?? 'Not provided'}
+- Height: ${profile?.height ?? 'Not provided'}
+- Activity level: ${profile?.activityLevel || 'Not provided'}
+- Goal type: ${goal?.goalType || 'Not provided'}
+- Target calories: ${goal?.targetCalories ?? 'Not provided'}
+- Target protein: ${goal?.targetProtein ?? 'Not provided'}
+- Target carbs: ${goal?.targetCarbs ?? 'Not provided'}
+- Target fat: ${goal?.targetFat ?? 'Not provided'}
+
+Recent cheat meals / deviations:
+${cheatMealSummary}
+
+Recent food logs / meals:
+${recentMealsSummary}
+`;
     }
 
     // אתחול ה-AI בתוך הפונקציה מבטיח שהמפתח כבר נטען מה-env בהצלחה
@@ -33,13 +107,15 @@ router.post('/chat', async (req, res) => {
 
       Guidelines:
       - Always respond in English.
+      - Use the provided user profile context, recent cheat meal history, and recent food logs to personalize advice as specifically as possible.
+      - When the user mentions a previous cheat meal or deviation, or when their recent logs show certain foods, help them plan the next meals and recovery approach around that exact context.
       - Keep responses supportive, grounded, and free of toxic diet-culture language.
       - If a user asks something completely unrelated to nutrition, recipes, or health, gently guide them back to your core topics.
     `;
 
     const response = await ai.models.generateContent({
       model: 'gemini-2.5-flash',
-      contents: message,
+      contents: `${userContext}\nUser message: ${message}`,
       config: {
         systemInstruction: systemInstruction,
         temperature: 0.5, 

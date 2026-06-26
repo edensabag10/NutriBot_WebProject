@@ -3,6 +3,7 @@ import AppLayout from './GUIComponents/AppLayout.jsx';
 import Card from './GUIComponents/Card.jsx';
 import NutriBotClientService from './services/NutriBotClientService.js';
 import { getCurrentUser, getCurrentUserDashboard } from './UsersManager/UsersService.js';
+import ProgressCharts from './ReportsManager/ProgressCharts.jsx';
 
 const featureCards = [
   ['nutrition-profile', 'Nutrition Profile', 'Create and update age, weight, height, and activity level.'],
@@ -11,7 +12,6 @@ const featureCards = [
   ['food-search', 'Food Search', 'Search the food database and save favorites.'],
   ['favorites', 'Favorite Foods', 'Open quick-selection foods.'],
   ['chatbot', 'AI Nutrition Assistant', 'Ask nutrition questions and get recommendation prototypes.'],
-  ['reports', 'Reports', 'View daily, weekly, and monthly nutrition summaries.'],
   ['reminders', 'Daily Reminders', 'Configure meal, water, and goal reminders.'],
   ['deviation-recovery', 'Recovery Planning', 'Create a moderate 48-hour deviation recovery plan.'],
   ['recipes', 'Budget Recipes', 'Filter recipe suggestions by estimated cost.'],
@@ -97,6 +97,12 @@ export default function Dashboard({ setScreen }) {
           <button className="mt-4 font-bold text-sky-700 dark:text-sky-400 hover:underline" onClick={() => setScreen('reminders')}>Manage reminders</button>
         </Card>
       </div>
+
+      <section className="mt-8">
+        <Card title="Nutrition progress">
+          <ProgressCharts />
+        </Card>
+      </section>
 
       <section className="mt-8">
         <Card title="Feature areas">

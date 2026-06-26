@@ -13,7 +13,9 @@ export default function DailyFoodLog({ setScreen }) {
   const [foods, setFoods] = useState([]);
   const [logs, setLogs] = useState([]);
   const [totals, setTotals] = useState(emptyTotals);
+  const [goal, setGoal] = useState(null);
   const [error, setError] = useState('');
+  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().slice(0, 10));
   const [form, setForm] = useState({
     foodId: '',
     quantity: 1,
@@ -21,43 +23,80 @@ export default function DailyFoodLog({ setScreen }) {
     mealType: 'Breakfast',
   });
 
-  const loadData = async () => {
+  const loadData = async (date = selectedDate) => {
+    if (!user?.id) return;
+
     try {
-      const [nextFoods, nextLogs, nextTotals] = await Promise.all([
+      const [nextFoods, nextLogs, nextTotals, nextGoal] = await Promise.all([
         NutriBotClientService.getFoods(),
-        NutriBotClientService.getFoodLogs(user.id),
-        NutriBotClientService.calculateTotals(user.id),
+        NutriBotClientService.getFoodLogs(user.id, date),
+        NutriBotClientService.calculateTotals(user.id, date),
+        NutriBotClientService.getGoal(user.id),
       ]);
 
       setFoods(nextFoods);
       setLogs(nextLogs);
       setTotals(nextTotals);
+      setGoal(nextGoal);
       setError('');
       setForm((currentForm) => ({
         ...currentForm,
+        date,
         foodId: currentForm.foodId || nextFoods[0]?.id || '',
       }));
+      setSelectedDate(date);
     } catch {
       setError('Unable to load food diary data');
     }
   };
 
   useEffect(() => {
-    loadData();
-  }, []);
+    loadData(selectedDate);
+  }, [user?.id, selectedDate]);
 
-  const handleChange = (event) => setForm({ ...form, [event.target.name]: event.target.value });
+  const handleChange = (event) => {
+    const { name, value } = event.target;
+    const nextForm = { ...form, [name]: value };
+    setForm(nextForm);
+
+    if (name === 'date') {
+      setSelectedDate(value);
+    }
+  };
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-    await NutriBotClientService.addFoodLog(user.id, form);
-    await loadData();
+    if (!user?.id || !form.foodId) return;
+
+    const payload = {
+      ...form,
+      userId: user.id,
+      foodId: form.foodId,
+      quantity: Number(form.quantity) || 1,
+      date: selectedDate,
+      mealType: form.mealType || 'Breakfast',
+    };
+
+    await NutriBotClientService.addFoodLog(user.id, payload);
+    await loadData(selectedDate);
   };
 
   const handleDelete = async (id) => {
     await NutriBotClientService.deleteFoodLog(id);
-    await loadData();
+    await loadData(selectedDate);
   };
+
+  const targetCalories = goal?.targetCalories || 2000;
+  const targetProtein = goal?.targetProtein || 120;
+  const targetCarbs = goal?.targetCarbs || 300;
+  const targetFat = goal?.targetFat || 90;
+
+  const progressMetrics = [
+    { label: 'Calories', value: totals.calories, target: targetCalories, unit: 'kcal' },
+    { label: 'Protein', value: totals.protein, target: targetProtein, unit: 'g' },
+    { label: 'Carbs', value: totals.carbs, target: targetCarbs, unit: 'g' },
+    { label: 'Fat', value: totals.fat, target: targetFat, unit: 'g' },
+  ];
 
   return (
     <AppLayout title="Daily Food Diary" setScreen={setScreen}>
@@ -95,6 +134,22 @@ export default function DailyFoodLog({ setScreen }) {
                 <div className="text-2xl font-black text-sky-700">{Math.round(value)}</div>
               </div>
             ))}
+          </div>
+          <div className="mt-4 space-y-3">
+            {progressMetrics.map((metric) => {
+              const percent = Math.min(100, Math.round((metric.value / metric.target) * 100));
+              return (
+                <div key={metric.label}>
+                  <div className="mb-1 flex items-center justify-between text-sm font-semibold text-slate-700">
+                    <span>{metric.label}</span>
+                    <span>{Math.round(metric.value)} / {metric.target} {metric.unit}</span>
+                  </div>
+                  <div className="h-2 rounded-full bg-slate-200">
+                    <div className="h-2 rounded-full bg-emerald-500" style={{ width: `${percent}%` }} />
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </Card>
         <Card title="Logged foods">

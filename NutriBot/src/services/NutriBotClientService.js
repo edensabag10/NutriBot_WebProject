@@ -173,11 +173,20 @@ async function getAllFoodLogs() {
   return apiRequest('/food-logs');
 }
 
-async function getFoodLogs(userId) {
+function normalizeDate(value) {
+  if (!value) return null;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+  return date.toISOString().slice(0, 10);
+}
+
+async function getFoodLogs(userId, date = null) {
   const [logs, foods] = await Promise.all([getAllFoodLogs(), getFoods()]);
+  const targetDate = normalizeDate(date) || (date ? String(date).slice(0, 10) : null);
 
   return logs
     .filter(byUserId(userId))
+    .filter((log) => (targetDate ? normalizeDate(log.date) === targetDate : true))
     .map((log) => ({
       ...log,
       food: foods.find((food) => String(food.id) === String(log.foodId)),
@@ -208,8 +217,8 @@ async function deleteFoodLog(id) {
   return apiRequest(`/food-logs/${id}`, { method: 'DELETE' });
 }
 
-async function calculateTotals(userId) {
-  const logs = await getFoodLogs(userId);
+async function calculateTotals(userId, date = null) {
+  const logs = await getFoodLogs(userId, date);
 
   return logs.reduce(
     (totals, log) => {
@@ -225,13 +234,13 @@ async function calculateTotals(userId) {
   );
 }
 
-async function getAllReminders() {
-  return apiRequest('/reminders');
+async function getAllReminders(userId = null) {
+  const query = userId ? `?userId=${encodeURIComponent(userId)}` : '';
+  return apiRequest(`/reminders${query}`);
 }
 
 async function getReminders(userId) {
-  const reminders = await getAllReminders();
-  return reminders.filter(byUserId(userId));
+  return getAllReminders(userId);
 }
 
 async function addReminder(userId, reminder) {
@@ -350,11 +359,11 @@ async function deleteDeviationRecovery(id) {
   return apiRequest(`/deviation-recoveries/${id}`, { method: 'DELETE' });
 }
 
-async function getBotReply(message, userId) {
+async function getBotReply(message, userId, userData = null) {
   try {
     const response = await apiRequest('/deviation-recoveries/chat', {
       method: 'POST',
-      body: JSON.stringify({ message })
+      body: JSON.stringify({ message, userId, user: userData }),
     });
     return response.reply;
   } catch (error) {

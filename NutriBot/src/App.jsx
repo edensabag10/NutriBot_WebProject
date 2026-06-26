@@ -10,7 +10,6 @@ import Goals from './NutritionManager/Goals.jsx'
 import NutritionProfile from './NutritionManager/NutritionProfile.jsx'
 import BudgetRecipeFilter from './RecipeManager/BudgetRecipeFilter.jsx'
 import Reminders from './ReminderManager/Reminders.jsx'
-import ProgressReports from './ReportsManager/ProgressReports.jsx'
 import Login from './UsersManager/Login.jsx'
 import ManageUsers from './UsersManager/ManageUsers.jsx'
 import Profile from './UsersManager/Profile.jsx'
@@ -39,7 +38,6 @@ function App() {
   if (currentScreen === 'food-search') return <FoodSearch setScreen={setCurrentScreen} />
   if (currentScreen === 'favorites') return <FavoriteFoods setScreen={setCurrentScreen} />
   if (currentScreen === 'chatbot') return <ChatBot setScreen={setCurrentScreen} />
-  if (currentScreen === 'reports') return <ProgressReports setScreen={setCurrentScreen} />
   if (currentScreen === 'reminders') return <Reminders setScreen={setCurrentScreen} />
   if (currentScreen === 'deviation-recovery') return <DeviationRecovery setScreen={setCurrentScreen} />
   if (currentScreen === 'recipes') return <BudgetRecipeFilter setScreen={setCurrentScreen} />

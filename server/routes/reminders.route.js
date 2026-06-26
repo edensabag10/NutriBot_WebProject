@@ -5,8 +5,9 @@ const router = express.Router();
 
 router.get('/', async (req, res) => {
   try {
-    // TODO: Filter reminders by userId and active status.
-    res.json(await Reminder.find());
+    const { userId } = req.query;
+    const filter = userId ? { userId } : {};
+    res.json(await Reminder.find(filter).sort({ time: 1, createdAt: 1 }));
   } catch (error) {
     res.status(500).json({ message: 'Failed to get reminders', error: error.message });
   }
