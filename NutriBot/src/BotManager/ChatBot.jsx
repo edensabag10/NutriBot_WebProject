@@ -23,10 +23,10 @@ export default function ChatBot({ setScreen }) {
     try {
       const reply = await NutriBotClientService.getBotReply(userMessage, user?.id, user);
       setMessages((currentMessages) => [...currentMessages, { role: 'bot', text: reply }]);
-    } catch {
+    } catch (error) {
       setMessages((currentMessages) => [
         ...currentMessages,
-        { role: 'bot', text: 'I could not load your nutrition data right now. Please try again soon.' },
+        { role: 'bot', text: error.message || 'I could not connect to the server right now. Please try again soon.' },
       ]);
     }
   };
